@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard • CTGAN Lung Prediction{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="h4 mb-1">Home / Dashboard</h1>
+      <div class="small-help">Entry point after login</div>
+    </div>
+    <div class="text-end">
+      <div class="small-help">Signed in as</div>
+      <div class="fw-semibold">{{ user_email }}</div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h6 mb-2">Create Prediction</h2>
+          <p class="small-help mb-3">Enter the required tabular features and run the CTGAN-trained prediction pipeline.</p>
+          <a class="btn btn-primary" href="{{ url_for('predict') }}">New Prediction</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h6 mb-2">View History</h2>
+          <p class="small-help mb-3">Review previous runs and open a result detail page.</p>
+          <a class="btn btn-outline-secondary" href="{{ url_for('history') }}">Open History</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h2 class="h6 mb-0">Recent Predictions</h2>
+      <a class="small" href="{{ url_for('history') }}">View all</a>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        {% if recent and recent|length > 0 %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Date (UTC)</th>
+                  <th>Risk</th>
+                  <th>Result</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in recent %}
+                  <tr>
+                    <td class="fw-semibold">{{ r.id }}</td>
+                    <td class="subtle">{{ r.created_at }}</td>
+                    <td>{{ (r.risk_probability * 100) | round(1) }}%</td>
+                    <td>
+                      {% if r.label == 'Yes' %}
+                        <span class="badge text-bg-danger">Yes</span>
+                      {% else %}
+                        <span class="badge text-bg-success">No</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end">
+                      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('result', prediction_id=r.id) }}">Details</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="small-help">No predictions yet. Create your first run.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

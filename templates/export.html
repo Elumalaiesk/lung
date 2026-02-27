@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Export • CTGAN Lung Prediction{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="h4 mb-1">Report / Export</h1>
+      <div class="small-help">Optional but high-scoring: export PDF reports and CSV summaries.</div>
+    </div>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('history') }}">Back to History</a>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-5">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h2 class="h6 mb-2">CSV Summary</h2>
+          <p class="small-help mb-3">Download a compact summary of all stored predictions.</p>
+          <a class="btn btn-outline-primary" href="{{ url_for('export_csv') }}">Download CSV</a>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mt-3">
+        <div class="card-body p-4">
+          <h2 class="h6 mb-2">PDF Report</h2>
+          <p class="small-help mb-0">Generate a one-page PDF for a specific prediction (tabular feature-based run).</p>
+          <div class="small-help mt-2">Use the recent list on the right, or open a Result page and click “Export PDF”.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-7">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h6 mb-0">Recent predictions</h2>
+            <a class="small" href="{{ url_for('history') }}">View all</a>
+          </div>
+
+          <hr class="my-3" />
+
+          {% if rows and rows|length > 0 %}
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Date (UTC)</th>
+                    <th>Risk</th>
+                    <th>Result</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in rows %}
+                    <tr>
+                      <td class="fw-semibold">{{ r.id }}</td>
+                      <td class="subtle">{{ r.created_at }}</td>
+                      <td>{{ (r.risk_probability * 100) | round(1) }}%</td>
+                      <td>
+                        {% if r.label == 'Yes' %}
+                          <span class="badge text-bg-danger">Yes</span>
+                        {% else %}
+                          <span class="badge text-bg-success">No</span>
+                        {% endif %}
+                      </td>
+                      <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('export_pdf', prediction_id=r.id) }}">PDF</a>
+                        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('result', prediction_id=r.id) }}">Details</a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="small-help">No predictions yet.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

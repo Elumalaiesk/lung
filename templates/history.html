@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}History • CTGAN Lung Prediction{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="h4 mb-1">History</h1>
+      <div class="small-help">Track past predictions and open details.</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('export') }}">Export</a>
+      <a class="btn btn-sm btn-primary" href="{{ url_for('predict') }}">New Prediction</a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      {% if rows and rows|length > 0 %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date (UTC)</th>
+                <th>Risk</th>
+                <th>Result</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in rows %}
+                <tr>
+                  <td class="fw-semibold">{{ r.id }}</td>
+                  <td class="subtle">{{ r.created_at }}</td>
+                  <td>{{ (r.risk_probability * 100) | round(1) }}%</td>
+                  <td>
+                    {% if r.label == 'Yes' %}
+                      <span class="badge text-bg-danger">Yes</span>
+                    {% else %}
+                      <span class="badge text-bg-success">No</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('result', prediction_id=r.id) }}">View details</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="small-help">No predictions stored yet.</div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

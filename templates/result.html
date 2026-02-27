@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Result • CTGAN Lung Prediction{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h1 class="h4 mb-1">Result</h1>
+      <div class="small-help">Prediction ID: <span class="fw-semibold">{{ p.id }}</span> • {{ p.created_at }} UTC</div>
+    </div>
+    <div class="text-end">
+      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('predict') }}">New Prediction</a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-7">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h6 mb-0">Early-stage cancer prediction</h2>
+            {% if p.label == 'Yes' %}
+              <span class="badge text-bg-danger">Yes</span>
+            {% else %}
+              <span class="badge text-bg-success">No</span>
+            {% endif %}
+          </div>
+
+          <hr class="my-3" />
+
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <div class="subtle">Risk probability</div>
+              <div class="kpi">{{ (p.risk_probability * 100) | round(1) }}%</div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="subtle">Confidence level</div>
+              <div class="kpi">{{ (p.confidence * 100) | round(1) }}%</div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="subtle">Status</div>
+              <div class="kpi">{{ p.label }}</div>
+            </div>
+          </div>
+
+          <hr class="my-3" />
+
+          <div class="subtle mb-1">Explanation</div>
+          <p class="mb-0">{{ p.explanation }}</p>
+
+          <div class="d-flex gap-2 mt-3">
+            <a class="btn btn-outline-secondary" href="{{ url_for('history') }}">View History</a>
+            <a class="btn btn-outline-primary" href="{{ url_for('export_pdf', prediction_id=p.id) }}">Export PDF</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h2 class="h6 mb-2">Inputs</h2>
+          <div class="small-help mb-2">These are stored for audit/history.</div>
+
+          <div class="border rounded-3 p-3 bg-light">
+            <div class="d-flex justify-content-between">
+              <div class="subtle">Input source</div>
+              <div class="fw-semibold">Tabular features</div>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+              <div class="subtle">Age</div>
+              <div class="fw-semibold">{{ p.age if p.age is not none else '—' }}</div>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+              <div class="subtle">Gender</div>
+              <div class="fw-semibold">{{ p.gender or '—' }}</div>
+            </div>
+          </div>
+
+          <div class="small-help mt-3">
+            Note: This UI intentionally avoids segmentation/overlays to match a tabular-feature ML workflow.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

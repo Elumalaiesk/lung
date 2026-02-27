@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Prediction • CTGAN Lung Prediction{% endblock %}
+
+{% block content %}
+  <div class="row g-3">
+    <div class="col-12 col-lg-7">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h1 class="h4 mb-1">Create Prediction</h1>
+          <div class="small-help">Feature-based prediction using the saved CTGAN + RandomForest tabular model.</div>
+
+          <hr class="my-3" />
+
+          <form id="predictForm" method="post" novalidate>
+            <div class="row g-2">
+              <div class="col-12 col-md-6">
+                <label class="form-label">Patient age</label>
+                <input class="form-control" type="number" name="age" min="0" max="120" placeholder="e.g., 56" required />
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label">Gender</label>
+                <select class="form-select" name="gender" required>
+                  <option value="" selected disabled>—</option>
+                  <option value="F">Female</option>
+                  <option value="M">Male</option>
+                </select>
+              </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <h2 class="h6 mb-2">Clinical features (required by current model)</h2>
+            <div class="small-help mb-3">These correspond to the 15-column CTGAN tabular pipeline used to train the saved model.</div>
+
+            <div class="row g-2">
+              {% set binary_fields = [
+                'SMOKING',
+                'YELLOW_FINGERS',
+                'ANXIETY',
+                'PEER_PRESSURE',
+                'CHRONIC DISEASE',
+                'FATIGUE',
+                'ALLERGY',
+                'WHEEZING',
+                'ALCOHOL CONSUMING',
+                'COUGHING',
+                'SHORTNESS OF BREATH',
+                'SWALLOWING DIFFICULTY',
+                'CHEST PAIN'
+              ] %}
+
+              {% for f in binary_fields %}
+                <div class="col-12 col-md-6">
+                  <label class="form-label">{{ f }}</label>
+                  <select class="form-select" name="{{ f }}" required>
+                    <option value="1" selected>No (1)</option>
+                    <option value="2">Yes (2)</option>
+                  </select>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div class="d-grid mt-4">
+              <button id="runBtn" class="btn btn-primary" type="submit">Run Prediction</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="small-help mt-3">
+        On submit, the backend will: validation → tabular feature assembly → CTGAN-trained model inference → redirect to Result.
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h6 mb-0">Pipeline Status</h2>
+            <span class="badge badge-clinical">Runtime</span>
+          </div>
+
+          <hr class="my-3" />
+
+          <div id="steps" class="subtle">
+            <div class="progress-step" data-step="1"><div class="progress-dot"></div><div>Input validation</div></div>
+            <div class="progress-step" data-step="2"><div class="progress-dot"></div><div>Tabular feature assembly</div></div>
+            <div class="progress-step" data-step="3"><div class="progress-dot"></div><div>CTGAN-trained model inference</div></div>
+            <div class="progress-step" data-step="4"><div class="progress-dot"></div><div>Redirecting to result</div></div>
+          </div>
+
+          <div id="hint" class="small-help mt-3">Steps will animate when you run a prediction.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function(){
+    const form = document.getElementById('predictForm');
+    const btn = document.getElementById('runBtn');
+    const steps = Array.from(document.querySelectorAll('.progress-step'));
+    const hint = document.getElementById('hint');
+
+    function setActive(i){
+      steps.forEach((s, idx) => {
+        if (idx <= i) s.classList.add('active');
+      });
+    }
+
+    if(form){
+      form.addEventListener('submit', function(){
+        if(btn){
+          btn.disabled = true;
+          btn.innerText = 'Running…';
+        }
+        if(hint) hint.innerText = 'Processing…';
+
+        // purely UI animation (server does real work)
+        setActive(0);
+        setTimeout(()=>setActive(1), 450);
+        setTimeout(()=>setActive(2), 900);
+        setTimeout(()=>setActive(3), 1400);
+      });
+    }
+  })();
+</script>
+{% endblock %}
