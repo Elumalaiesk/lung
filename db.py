@@ -15,6 +15,7 @@ class PredictionRow:
     file_name: str
     age: Optional[int]
     gender: Optional[str]
+    name: Optional[str]
     risk_probability: float
     label: str
     confidence: float
@@ -33,6 +34,7 @@ def init_db(db_path: str) -> None:
                 file_name TEXT NOT NULL,
                 age INTEGER NULL,
                 gender TEXT NULL,
+                name TEXT NULL,
                 risk_probability REAL NOT NULL,
                 label TEXT NOT NULL,
                 confidence REAL NOT NULL,
@@ -51,6 +53,7 @@ def _row_to_prediction(row: sqlite3.Row) -> PredictionRow:
         file_name=str(row["file_name"]),
         age=row["age"],
         gender=row["gender"],
+        name=row["name"],
         risk_probability=float(row["risk_probability"]),
         label=str(row["label"]),
         confidence=float(row["confidence"]),
@@ -65,6 +68,7 @@ def insert_prediction(
     file_name: str,
     age: Optional[int],
     gender: Optional[str],
+    name: Optional[str],
     risk_probability: float,
     label: str,
     confidence: float,
@@ -77,10 +81,10 @@ def insert_prediction(
         cur = conn.execute(
             """
             INSERT INTO predictions (
-                created_at, user_email, file_name, age, gender,
+                created_at, user_email, file_name, age, gender, name,
                 risk_probability, label, confidence, explanation
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 created_at,
@@ -88,6 +92,7 @@ def insert_prediction(
                 file_name,
                 age,
                 gender,
+                name,
                 float(risk_probability),
                 label,
                 float(confidence),

@@ -67,7 +67,7 @@ def run_ctgan_enhanced_prediction(
     elif norm_gender in {"female", "f"}:
         risk = max(0.0, risk - 0.005)
 
-    label = "Yes" if risk >= 0.5 else "No"
+    label = "No" if risk >= 0.5 else "Yes"
 
     # Confidence goes up the farther we are from the decision boundary
     confidence = min(0.99, 0.55 + abs(risk - 0.5) * 0.9)
@@ -142,9 +142,9 @@ def _predict_with_saved_model(
     else:
         # Fallback: treat last class as positive.
         pos_idx = -1
-
+    le_target = encoders["LUNG_CANCER"]
     risk = float(proba[pos_idx])
-    label = "Yes" if risk >= 0.5 else "No"
+    label = le_target.transform([risk])[0] if hasattr(le_target, "classes_") else ("No" if risk >= 0.5 else "Yes")
     confidence = float(max(risk, 1.0 - risk))
 
     explanation = (

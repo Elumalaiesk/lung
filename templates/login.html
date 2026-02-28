@@ -10,9 +10,8 @@
           <div class="d-flex justify-content-between align-items-start">
             <div>
               <h1 class="h4 mb-1">Login</h1>
-              <div class="small-help">Basic access control (college requirement)</div>
+              <div class="small-help">Kindly enter your email and request an auth code.</div>
             </div>
-            <span class="badge badge-clinical">Demo</span>
           </div>
 
           <hr class="my-3" />
@@ -20,17 +19,20 @@
           <form method="post" novalidate>
             <div class="mb-3">
               <label class="form-label">Email</label>
-              <input class="form-control" type="email" name="email" value="{{ email or '' }}" placeholder="name@college.edu" required />
+              <input class="form-control" type="email" name="email" value="{{ email or '' }}" placeholder="name@college.edu" required {% if email %}readonly{% endif %} />
+              <div class="d-grid mt-2">
+                <button class="btn btn-outline-primary" type="submit" name="action" value="send_code" {% if email %}disabled{% endif %}>Send Auth Code</button>
+              </div>
             </div>
 
             <div class="mb-2">
               <label class="form-label">Auth code</label>
-              <input class="form-control" type="password" name="code" placeholder="OTP / static code" required />
-              <div class="form-text">Default code is <span class="fw-semibold">123456</span> (change via <code>AUTH_CODE</code> env var).</div>
+              <input class="form-control" type="password" name="code" placeholder="OTP / static code" {% if not email %}disabled{% endif %} required />
+              <div class="form-text">Check your email for the code.</div>
             </div>
 
             <div class="d-grid mt-4">
-              <button class="btn btn-primary" type="submit">Continue</button>
+              <button class="btn btn-primary" type="submit" name="action" value="login" {% if not email %}disabled{% endif %}>Login</button>
             </div>
           </form>
         </div>

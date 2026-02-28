@@ -20,9 +20,10 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 
-from auth import login_required
+from auth import login_required, send_auth_code_email
 from db import get_prediction, init_db, insert_prediction, list_predictions
 from predictor import run_ctgan_enhanced_prediction
+import random
 
 
 def create_app() -> Flask:
@@ -64,10 +65,28 @@ def create_app() -> Flask:
                 flash("Email is required.", "danger")
                 return render_template("login.html")
 
-            if code != app.config["AUTH_CODE"]:
+            # If no code submitted, generate and send code
+            if not code:
+                generated_code = str(random.randint(100000, 999999))
+                session["pending_email"] = email
+                session["pending_code"] = generated_code
+                try:
+                    send_auth_code_email(email, generated_code)
+                    flash("Auth code sent to your email. Please check your inbox.", "info")
+                except Exception as e:
+                    flash(f"Failed to send email: {e}", "danger")
+                return render_template("login.html", email=email)
+
+            # Validate submitted code
+            if (
+                email != session.get("pending_email") or
+                code != session.get("pending_code")
+            ):
                 flash("Invalid auth code.", "danger")
                 return render_template("login.html", email=email)
 
+            session.pop("pending_email", None)
+            session.pop("pending_code", None)
             session["user_email"] = email
             next_path = request.args.get("next")
             return redirect(next_path or url_for("dashboard"))
@@ -106,6 +125,11 @@ def create_app() -> Flask:
 
             if not gender:
                 flash("Gender is required for the current model.", "danger")
+                return render_template("predict.html")
+
+            name = (request.form.get("name") or "").strip()
+            if not name:
+                flash("Patient name is required.", "danger")
                 return render_template("predict.html")
 
             # Collect tabular clinical features required by the saved model.
@@ -156,6 +180,7 @@ def create_app() -> Flask:
                 file_name=filename,
                 age=age,
                 gender=gender or None,
+                name=name,
                 risk_probability=result.risk_probability,
                 label=result.label,
                 confidence=result.confidence,
@@ -251,6 +276,8 @@ def create_app() -> Flask:
         y -= 0.25 * inch
         c.setFont("Helvetica", 10)
         c.drawString(left, y, "Input source: Tabular clinical features")
+        y -= 0.2 * inch
+        c.drawString(left, y, f"Patient Name: {row.name or '—'}")
         y -= 0.2 * inch
         c.drawString(left, y, f"Age: {row.age if row.age is not None else '—'}")
         y -= 0.2 * inch

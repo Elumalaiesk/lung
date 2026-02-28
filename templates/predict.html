@@ -15,6 +15,10 @@
           <form id="predictForm" method="post" novalidate>
             <div class="row g-2">
               <div class="col-12 col-md-6">
+                <label class="form-label">Patient Name</label>
+                <input class="form-control" type="text" name="name" placeholder="e.g., John Doe" required />
+              </div>
+              <div class="col-12 col-md-6">
                 <label class="form-label">Patient age</label>
                 <input class="form-control" type="number" name="age" min="0" max="120" placeholder="e.g., 56" required />
               </div>
@@ -90,7 +94,7 @@
             <div class="progress-step" data-step="4"><div class="progress-dot"></div><div>Redirecting to result</div></div>
           </div>
 
-          <div id="hint" class="small-help mt-3">Steps will animate when you run a prediction.</div>
+          <div id="hint" class="small-help mt-3">Progressing...</div>
         </div>
       </div>
     </div>
