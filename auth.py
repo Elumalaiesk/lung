@@ -8,6 +8,13 @@ import smtplib
 import os
 from email.mime.text import MIMEText
 
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+
+load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
+
 F = TypeVar("F", bound=Callable[..., Any])
 
 

@@ -5,6 +5,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from dotenv import load_dotenv
+
 from flask import (
     Flask,
     abort,
@@ -24,6 +26,11 @@ from auth import login_required, send_auth_code_email
 from db import get_prediction, init_db, insert_prediction, list_predictions
 from predictor import run_ctgan_enhanced_prediction
 import random
+
+
+# Load local environment variables (e.g., SMTP settings) from .env.
+# On Windows, these are not automatically imported into the process environment.
+load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
 
 
 def create_app() -> Flask:
@@ -101,7 +108,8 @@ def create_app() -> Flask:
     @app.get("/dashboard")
     @login_required
     def dashboard():
-        recent = list_predictions(app.config["DATABASE"], limit=5)
+        user_email = str(session.get("user_email"))
+        recent = list_predictions(app.config["DATABASE"], limit=5, user_email=user_email)
         return render_template("dashboard.html", recent=recent)
 
     @app.route("/predict", methods=["GET", "POST"])
@@ -120,11 +128,11 @@ def create_app() -> Flask:
                     flash("Age must be a number between 0 and 120.", "danger")
                     return render_template("predict.html")
             else:
-                flash("Age is required for the current model.", "danger")
+                flash("Please provide an age.", "danger")
                 return render_template("predict.html")
 
             if not gender:
-                flash("Gender is required for the current model.", "danger")
+                flash("Please select a gender.", "danger")
                 return render_template("predict.html")
 
             name = (request.form.get("name") or "").strip()
@@ -194,7 +202,8 @@ def create_app() -> Flask:
     @app.get("/result/<int:prediction_id>")
     @login_required
     def result(prediction_id: int):
-        row = get_prediction(app.config["DATABASE"], prediction_id)
+        user_email = str(session.get("user_email"))
+        row = get_prediction(app.config["DATABASE"], prediction_id, user_email=user_email)
         if row is None:
             abort(404)
         return render_template("result.html", p=row)
@@ -202,13 +211,15 @@ def create_app() -> Flask:
     @app.get("/history")
     @login_required
     def history():
-        rows = list_predictions(app.config["DATABASE"], limit=None)
+        user_email = str(session.get("user_email"))
+        rows = list_predictions(app.config["DATABASE"], limit=None, user_email=user_email)
         return render_template("history.html", rows=rows)
 
     @app.get("/export")
     @login_required
     def export():
-        rows = list_predictions(app.config["DATABASE"], limit=10)
+        user_email = str(session.get("user_email"))
+        rows = list_predictions(app.config["DATABASE"], limit=10, user_email=user_email)
         return render_template("export.html", rows=rows)
 
     @app.get("/export/csv")
@@ -217,7 +228,9 @@ def create_app() -> Flask:
         import csv
         import io
 
-        rows = list_predictions(app.config["DATABASE"], limit=None)
+        user_email = str(session.get("user_email"))
+
+        rows = list_predictions(app.config["DATABASE"], limit=None, user_email=user_email)
         buffer = io.StringIO()
         writer = csv.writer(buffer)
         writer.writerow(["id", "created_at", "file_name", "age", "gender", "risk_probability", "label", "confidence"])
@@ -236,10 +249,8 @@ def create_app() -> Flask:
             )
 
         csv_bytes = buffer.getvalue().encode("utf-8")
-        file_path = Path(app.instance_path) / "predictions_export.csv"
-        file_path.write_bytes(csv_bytes)
         return send_file(
-            file_path,
+            io.BytesIO(csv_bytes),
             as_attachment=True,
             download_name="predictions_summary.csv",
             mimetype="text/csv",
@@ -248,7 +259,8 @@ def create_app() -> Flask:
     @app.get("/export/pdf/<int:prediction_id>")
     @login_required
     def export_pdf(prediction_id: int):
-        row = get_prediction(app.config["DATABASE"], prediction_id)
+        user_email = str(session.get("user_email"))
+        row = get_prediction(app.config["DATABASE"], prediction_id, user_email=user_email)
         if row is None:
             abort(404)
 
@@ -332,4 +344,4 @@ def create_app() -> Flask:
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(debug=True, host="127.0.0.1", port=3000)
+    app.run(debug=True, host="127.0.0.1", port=5000)

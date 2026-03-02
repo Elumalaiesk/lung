@@ -8,7 +8,7 @@
       <div class="card shadow-sm">
         <div class="card-body p-4">
           <h1 class="h4 mb-1">Create Prediction</h1>
-          <div class="small-help">Feature-based prediction using the saved CTGAN + RandomForest tabular model.</div>
+          <!-- <div class="small-help">Feature-based prediction using the saved CTGAN + RandomForest tabular model.</div> -->
 
           <hr class="my-3" />
 
@@ -34,8 +34,8 @@
 
             <hr class="my-4" />
 
-            <h2 class="h6 mb-2">Clinical features (required by current model)</h2>
-            <div class="small-help mb-3">These correspond to the 15-column CTGAN tabular pipeline used to train the saved model.</div>
+            <h2 class="h6 mb-2">Please answer the following questions:</h2>
+            <!-- <div class="small-help mb-3">These correspond to the 15-column CTGAN tabular pipeline used to train the saved model.</div> -->
 
             <div class="row g-2">
               {% set binary_fields = [
@@ -94,7 +94,7 @@
             <div class="progress-step" data-step="4"><div class="progress-dot"></div><div>Redirecting to result</div></div>
           </div>
 
-          <div id="hint" class="small-help mt-3">Progressing...</div>
+          <!-- <div id="hint" class="small-help mt-3">Progressing...</div> -->
         </div>
       </div>
     </div>
@@ -124,6 +124,7 @@
         if(hint) hint.innerText = 'Processing…';
 
         // purely UI animation (server does real work)
+        steps.forEach(s => s.classList.remove('active'));
         setActive(0);
         setTimeout(()=>setActive(1), 450);
         setTimeout(()=>setActive(2), 900);

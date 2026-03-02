@@ -42,10 +42,17 @@ def init_db(db_path: str) -> None:
             )
             """
         )
+        # Lightweight migration for older DBs created before the `name` column existed.
+        existing_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(predictions)").fetchall()
+        }
+        if "name" not in existing_cols:
+            conn.execute("ALTER TABLE predictions ADD COLUMN name TEXT NULL")
         conn.commit()
 
 
 def _row_to_prediction(row: sqlite3.Row) -> PredictionRow:
+    keys = set(row.keys())
     return PredictionRow(
         id=int(row["id"]),
         created_at=str(row["created_at"]),
@@ -53,7 +60,7 @@ def _row_to_prediction(row: sqlite3.Row) -> PredictionRow:
         file_name=str(row["file_name"]),
         age=row["age"],
         gender=row["gender"],
-        name=row["name"],
+        name=row["name"] if "name" in keys else None,
         risk_probability=float(row["risk_probability"]),
         label=str(row["label"]),
         confidence=float(row["confidence"]),
@@ -103,26 +110,40 @@ def insert_prediction(
         return int(cur.lastrowid)
 
 
-def get_prediction(db_path: str, prediction_id: int) -> Optional[PredictionRow]:
+def get_prediction(
+    db_path: str, prediction_id: int, user_email: Optional[str] = None
+) -> Optional[PredictionRow]:
     with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
-        cur = conn.execute(
-            "SELECT * FROM predictions WHERE id = ?",
-            (int(prediction_id),),
-        )
+        if user_email:
+            cur = conn.execute(
+                "SELECT * FROM predictions WHERE id = ? AND user_email = ?",
+                (int(prediction_id), str(user_email)),
+            )
+        else:
+            cur = conn.execute(
+                "SELECT * FROM predictions WHERE id = ?",
+                (int(prediction_id),),
+            )
         row = cur.fetchone()
         if row is None:
             return None
         return _row_to_prediction(row)
 
 
-def list_predictions(db_path: str, limit: Optional[int] = None) -> list[PredictionRow]:
+def list_predictions(
+    db_path: str, limit: Optional[int] = None, user_email: Optional[str] = None
+) -> list[PredictionRow]:
     with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
-        sql = "SELECT * FROM predictions ORDER BY id DESC"
-        params: tuple = ()
+        params_list: list[object] = []
+        sql = "SELECT * FROM predictions"
+        if user_email:
+            sql += " WHERE user_email = ?"
+            params_list.append(str(user_email))
+        sql += " ORDER BY id DESC"
         if limit is not None:
             sql += " LIMIT ?"
-            params = (int(limit),)
-        cur = conn.execute(sql, params)
+            params_list.append(int(limit))
+        cur = conn.execute(sql, tuple(params_list))
         return [_row_to_prediction(r) for r in cur.fetchall()]
